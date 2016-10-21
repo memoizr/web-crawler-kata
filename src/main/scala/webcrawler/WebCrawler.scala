@@ -1,34 +1,36 @@
 package webcrawler
 
+import java.net.{URI, URL}
+
 import scala.collection.mutable
 
 class WebCrawler(webParser: WebParser, urlParser: UrlParser, domainParser: DomainParser.type, printer: UrlPrinter) {
-  val set = mutable.Set[String]()
+  val visitedUrls = mutable.Set[String]()
 
   def crawl(address: String): Unit = {
-    set add address
+    if (!visitedUrls.contains(address)) {
 
-    printer.printRoot(address)
+      visitedUrls.add(address)
+      printer.printRoot(address)
 
-    val currentPage = webParser.visit(address)
+      val currentPage = webParser.visit(address)
+      val urls = urlParser.parse(currentPage).toList
 
-    val urls = urlParser.parse(currentPage).toList
-    printer.printUrls(urls)
+      printer.printUrls(urls)
 
-    visitAllLinksToCurrentDomain(address, urls)
+      visitAllLinksToCurrentDomain(address, urls)
+    }
   }
 
-  def visitAllLinksToCurrentDomain(address: String, urls: List[String]): Unit = {
-    val domain = domainParser.parse(address).get
-    val currentDomain = "http://" + domain
-    urls.filter(isSameDomain(address, _)).map(x=> if (x.contains(domain)) x else currentDomain + x).filterNot(set.contains).foreach(crawl)
+  private def visitAllLinksToCurrentDomain(address: String, urls: List[String]): Unit = {
+    val host = new URL(address).getHost
+    urls.filter(isSameDomain(host, _))
+      .map(url => if (url.contains(host)) url else address + url)
+      .filterNot(visitedUrls.contains).foreach(crawl)
   }
 
-  def isSameDomain(currentUrl: String, url: String): Boolean = {
-    val currentDomain = domainParser.parse(currentUrl)
-    val targetDomain = domainParser.parse(url)
-
-    targetDomain.flatMap(x => currentDomain.map(_.contains(x))).getOrElse(true)
+  private def isSameDomain(host: String, url: String): Boolean = {
+    Option(new URI(url).getHost).forall(_.contains(host))
   }
 }
 

@@ -10,9 +10,13 @@ class UrlParser {
     count.map(a => if (a.group(2) == null) a.group(4) else a.group(2))
       .filterNot(_ == null)
       .map(a => {
-        if (a.startsWith("http") || a.startsWith("/")) a else "/" + a
+        if (a.startsWith("http") || a.startsWith("/") ) {removeTrailingSlash(a)} else "/" + a
       })
       .toSet
+  }
+
+  def removeTrailingSlash(a: String): String = {
+    if (a.endsWith("/")) a.dropRight(1) else a
   }
 }
 

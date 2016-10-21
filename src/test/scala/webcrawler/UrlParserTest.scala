@@ -3,7 +3,7 @@ package webcrawler
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatest.{FreeSpec, Matchers}
 
-class HrefParserTest extends FreeSpec with TableDrivenPropertyChecks with Matchers {
+class UrlParserTest extends FreeSpec with TableDrivenPropertyChecks with Matchers {
 
   "A parser" - {
     val parser = UrlParser()
@@ -43,6 +43,7 @@ class HrefParserTest extends FreeSpec with TableDrivenPropertyChecks with Matche
         val table = Table(
           ("input", "output"),
           ("""<a href='http://myurl.com'>><boo href = 'baz' """, Set("/baz", "http://myurl.com")),
+          ("""<a href='http://myurl.com/foobar/'>>""", Set("http://myurl.com/foobar")),
           ("""<a href='http://myurl.com'>><boo href = '/baz' """, Set("/baz", "http://myurl.com")),
           ("""<a href='http://myurl.com'>><boo href = ' /baz '><><href ="/baz">//>> """, Set("/baz", "http://myurl.com")),
           ("""<a href='http://myurl.com'>><boo href ="/baz" """, Set("/baz", "http://myurl.com"))

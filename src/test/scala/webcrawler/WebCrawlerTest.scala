@@ -1,7 +1,8 @@
 package webcrawler
 
 import org.mockito.Mockito
-import org.mockito.Mockito.{mock, verify, verifyNoMoreInteractions, when}
+import org.mockito.Mockito._
+import org.mockito.verification.VerificationMode
 import org.scalatest.{FreeSpec, Matchers}
 
 class WebCrawlerTest extends FreeSpec with Matchers {
@@ -20,7 +21,7 @@ class WebCrawlerTest extends FreeSpec with Matchers {
 
       val about = "/about"
       val privacy = "/privacy"
-      val jobs = "/jobs"
+      val jobs = domain + "/jobs"
 
       val nope= "https://nope.com"
       val foobars = "http://foobars.com"
@@ -38,21 +39,21 @@ class WebCrawlerTest extends FreeSpec with Matchers {
 
       when(webParser.visit(domain)).thenReturn(firstPage)
       when(webParser.visit(domain + about)).thenReturn(aboutPage)
-      when(webParser.visit(domain + jobs)).thenReturn(jobsPage)
+      when(webParser.visit(jobs)).thenReturn(jobsPage)
       when(webParser.visit(domain + privacy)).thenReturn(privacyPage)
 
       webCrawler.crawl(domain)
 
       verify(webParser).visit(domain)
       verify(webParser).visit(domain + about)
-      verify(webParser).visit(domain + jobs)
+      verify(webParser).visit(jobs)
       verify(webParser).visit(domain + privacy)
 
       verifyNoMoreInteractions(webParser)
 
       verifyRootAndUrlsPrinted(domain, firstPageUrls)
       verifyRootAndUrlsPrinted(domain + about, aboutPageurls)
-      verifyRootAndUrlsPrinted(domain + jobs, jobsPageUrls)
+      verifyRootAndUrlsPrinted(jobs, jobsPageUrls)
       verifyRootAndUrlsPrinted(domain + privacy, privacyPageUrls)
 
       verifyNoMoreInteractions(printer)
@@ -66,29 +67,43 @@ class WebCrawlerTest extends FreeSpec with Matchers {
       val domain: String = "http://google.com"
 
       val about = "/about"
+      val privacy = "/privacy"
 
-      val firstPage = s"""<a href="$about"/>"""
+      val firstPage = s"""<a href="$about"/><a href="$privacy"/>"""
       val aboutPage = s"""<a href="$domain"/>""""
+      val privacyPage = s"""<a href="$domain"/>""""
 
-      val firstPageUrls = List(about)
-      val aboutPageurls = List(domain)
+      val firstPageUrls = List(about, privacy)
+      val aboutPageUrls = List(domain)
+      val privacyPageUrls = List(domain)
 
       when(webParser.visit(domain)).thenReturn(firstPage)
       when(webParser.visit(domain + about)).thenReturn(aboutPage)
+      when(webParser.visit(domain + privacy)).thenReturn(privacyPage)
 
       webCrawler.crawl(domain)
 
       verify(webParser).visit(domain)
       verify(webParser).visit(domain + about)
+      verify(webParser).visit(domain + privacy)
 
-      verifyRootAndUrlsPrinted(domain, firstPageUrls)
-      verifyRootAndUrlsPrinted(domain + about, aboutPageurls)
+      verifyNoMoreInteractions(webParser)
+
+      verify(printer).printRoot(domain)
+      verify(printer).printUrls(firstPageUrls)
+
+      verify(printer).printRoot(domain + about)
+      verify(printer).printRoot(domain + privacy)
+
+      verify(printer, times(2)).printUrls(privacyPageUrls)
+
+      verifyNoMoreInteractions(printer)
     }
   }
 
-  def verifyRootAndUrlsPrinted(googlecom: String, firstPageUrls: List[String]): Unit = {
-    verify(printer).printRoot(googlecom)
-    verify(printer).printUrls(firstPageUrls)
+  def verifyRootAndUrlsPrinted(url: String, urls: List[String], verificationMode: VerificationMode = times(1)): Unit = {
+    verify(printer, verificationMode).printRoot(url)
+    verify(printer, verificationMode).printUrls(urls)
   }
 }
 
