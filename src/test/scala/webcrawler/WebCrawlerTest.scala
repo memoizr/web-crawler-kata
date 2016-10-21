@@ -10,13 +10,12 @@ class WebCrawlerTest extends FreeSpec with Matchers {
   val printer = mock(classOf[UrlPrinter])
 
   val urlParser = UrlParser()
-  val domainParser = DomainParser
 
 
   "WebCrawler" - {
 
     "should recursevely match" - {
-      val webCrawler = WebCrawler(webParser, urlParser, domainParser, printer)
+      val webCrawler = WebCrawler(webParser, urlParser, printer)
       val domain: String = "http://google.com"
 
       val about = "/about"
@@ -62,7 +61,7 @@ class WebCrawlerTest extends FreeSpec with Matchers {
     "should not visit same link twice" in {
       Mockito.reset(webParser)
       Mockito.reset(printer)
-      val webCrawler = WebCrawler(webParser, urlParser, domainParser, printer)
+      val webCrawler = WebCrawler(webParser, urlParser, printer)
 
       val domain: String = "http://google.com"
 

@@ -4,13 +4,13 @@ import java.net.{URI, URL}
 
 import scala.collection.mutable
 
-class WebCrawler(webParser: WebParser, urlParser: UrlParser, domainParser: DomainParser.type, printer: UrlPrinter) {
+class WebCrawler(webParser: WebParser, urlParser: UrlParser, printer: UrlPrinter) {
   val visitedUrls = mutable.Set[String]()
 
   def crawl(address: String): Unit = {
     if (!visitedUrls.contains(address)) {
-
       visitedUrls.add(address)
+
       printer.printRoot(address)
 
       val currentPage = webParser.visit(address)
@@ -36,6 +36,6 @@ class WebCrawler(webParser: WebParser, urlParser: UrlParser, domainParser: Domai
 
 
 object WebCrawler {
-  def apply(webParser: WebParser, urlParser: UrlParser, domainParser: DomainParser.type, printer: UrlPrinter): WebCrawler =
-    new WebCrawler(webParser, urlParser, domainParser, printer)
+  def apply(webParser: WebParser, urlParser: UrlParser, printer: UrlPrinter): WebCrawler =
+    new WebCrawler(webParser, urlParser, printer)
 }
