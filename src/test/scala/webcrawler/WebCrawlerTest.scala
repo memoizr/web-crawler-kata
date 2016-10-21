@@ -1,6 +1,7 @@
 package webcrawler
 
-import org.mockito.Mockito.{mock, verify, when}
+import org.mockito.Mockito
+import org.mockito.Mockito.{mock, verify, verifyNoMoreInteractions, when}
 import org.scalatest.{FreeSpec, Matchers}
 
 class WebCrawlerTest extends FreeSpec with Matchers {
@@ -12,9 +13,9 @@ class WebCrawlerTest extends FreeSpec with Matchers {
 
 
   "WebCrawler" - {
-    val webCrawler = WebCrawler(webParser, urlParser, domainParser, printer)
 
     "should recursevely match" - {
+      val webCrawler = WebCrawler(webParser, urlParser, domainParser, printer)
       val domain: String = "http://google.com"
 
       val about = "/about"
@@ -47,10 +48,41 @@ class WebCrawlerTest extends FreeSpec with Matchers {
       verify(webParser).visit(domain + jobs)
       verify(webParser).visit(domain + privacy)
 
+      verifyNoMoreInteractions(webParser)
+
       verifyRootAndUrlsPrinted(domain, firstPageUrls)
       verifyRootAndUrlsPrinted(domain + about, aboutPageurls)
       verifyRootAndUrlsPrinted(domain + jobs, jobsPageUrls)
       verifyRootAndUrlsPrinted(domain + privacy, privacyPageUrls)
+
+      verifyNoMoreInteractions(printer)
+    }
+
+    "should not visit same link twice" in {
+      Mockito.reset(webParser)
+      Mockito.reset(printer)
+      val webCrawler = WebCrawler(webParser, urlParser, domainParser, printer)
+
+      val domain: String = "http://google.com"
+
+      val about = "/about"
+
+      val firstPage = s"""<a href="$about"/>"""
+      val aboutPage = s"""<a href="$domain"/>""""
+
+      val firstPageUrls = List(about)
+      val aboutPageurls = List(domain)
+
+      when(webParser.visit(domain)).thenReturn(firstPage)
+      when(webParser.visit(domain + about)).thenReturn(aboutPage)
+
+      webCrawler.crawl(domain)
+
+      verify(webParser).visit(domain)
+      verify(webParser).visit(domain + about)
+
+      verifyRootAndUrlsPrinted(domain, firstPageUrls)
+      verifyRootAndUrlsPrinted(domain + about, aboutPageurls)
     }
   }
 
